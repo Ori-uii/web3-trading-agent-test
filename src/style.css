@@ -41,15 +41,25 @@ select {
   overflow-x: hidden;
 }
 
-/* 暂时没有接入视频，所以这里用深色科技渐变作为首页背景。 */
+.hero-video {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 3;
+  object-fit: cover;
+  background: #05070b;
+  pointer-events: none;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+}
+
 .hero-shade {
   position: fixed;
   inset: 0;
   z-index: 4;
   background:
-    radial-gradient(circle at 20% 16%, rgba(56, 189, 248, 0.24), transparent 28%),
-    radial-gradient(circle at 80% 18%, rgba(99, 102, 241, 0.2), transparent 30%),
-    linear-gradient(135deg, #05070b 0%, #0a1425 48%, #05070b 100%);
+    radial-gradient(circle at 20% 16%, rgba(56, 189, 248, 0.18), transparent 28%),
+    radial-gradient(circle at 80% 18%, rgba(99, 102, 241, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(5, 7, 11, 0.72) 0%, rgba(10, 20, 37, 0.56) 48%, rgba(5, 7, 11, 0.78) 100%);
   pointer-events: none;
   transition: opacity 120ms linear;
 }
@@ -181,6 +191,10 @@ select {
   align-items: center;
 }
 
+.nav-item--resources {
+  position: static;
+}
+
 .nav-item > a {
   padding: 10px 0;
   border-radius: 8px;
@@ -200,7 +214,8 @@ select {
   padding-inline: 13px;
 }
 
-.nav-item--resources:hover > a {
+.nav-item--resources:hover > a,
+.nav-item--resources.is-resource-open > a {
   color: #ffffff;
   opacity: 1;
   background: rgba(255, 255, 255, 0.12);
@@ -208,21 +223,18 @@ select {
 
 .resource-popover {
   position: absolute;
-  top: calc(100% + 14px);
+  top: 0;
   left: 50%;
   z-index: 40;
   width: min(94vw, 780px);
-  min-height: 184px;
+  min-height: 252px;
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(300px, 1fr);
   gap: 24px;
-  padding: 18px;
+  padding: 92px 18px 18px;
   border-radius: 18px;
   color: #ffffff;
-  background: #000000;
-  box-shadow:
-    0 28px 70px rgba(0, 0, 0, 0.32),
-    0 0 0 1px rgba(255, 255, 255, 0.04);
+  background: transparent;
   opacity: 0;
   pointer-events: none;
   transform: translateX(-50%) translateY(10px) scale(0.98);
@@ -232,7 +244,33 @@ select {
     transform 220ms ease;
 }
 
-.nav-item--resources:hover .resource-popover {
+.resource-popover::before {
+  content: "";
+  position: absolute;
+  top: 78px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  border-radius: 18px;
+  background: #000000;
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.is-scrolled .resource-popover {
+  min-height: 236px;
+  padding-top: 80px;
+}
+
+.is-scrolled .resource-popover::before {
+  top: 68px;
+}
+
+.nav-item--resources:hover .resource-popover,
+.resource-popover--open,
+.resource-popover:hover {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0) scale(1);
@@ -305,6 +343,8 @@ select {
 .resource-preview {
   position: relative;
   min-height: 148px;
+  display: grid;
+  place-items: center;
   border-radius: 16px;
   background:
     radial-gradient(circle at 58% 48%, rgba(165, 181, 255, 0.18), transparent 34%),
@@ -313,12 +353,10 @@ select {
 }
 
 .resource-preview-stack {
-  position: absolute;
-  top: 28px;
-  left: 50%;
+  position: relative;
   width: 122px;
   height: 96px;
-  transform: translateX(-50%);
+  margin: 0 auto;
 }
 
 .resource-preview-stack span {

@@ -54,12 +54,14 @@ const scrollY = ref(0);
 const viewportWidth = ref(window.innerWidth);
 const viewportHeight = ref(window.innerHeight);
 const activeUpdateIndex = ref(0);
+const resourceMenuOpen = ref(false);
 const railCursorVisible = ref(false);
 const railCursorX = ref(0);
 const railCursorY = ref(0);
 const railCursorDirection = ref("right");
 
 let latestIntervalId;
+let resourceCloseTimeoutId;
 let wheelSnapTimeoutId;
 let isWheelSnapping = false;
 
@@ -83,6 +85,29 @@ const heroContentStyle = computed(() => ({
   opacity: String(1 - scrollProgress.value * 1.25),
   transform: `translateY(${-48 * scrollProgress.value}px)`,
 }));
+
+const mix = (start, end, progress) => start + (end - start) * progress;
+
+const heroVideoStyle = computed(() => {
+  const progress = scrollProgress.value;
+  const isMobile = viewportWidth.value <= 800;
+  const hasReachedWelcome = progress >= 1;
+  const targetWidth = isMobile
+    ? Math.min(viewportWidth.value * 0.84, 560)
+    : Math.max(Math.min(viewportWidth.value * 0.38, 620), 280);
+  const targetHeight = targetWidth / 1.62;
+
+  return {
+    position: hasReachedWelcome ? "absolute" : "fixed",
+    top: hasReachedWelcome ? `${viewportHeight.value * 1.5}px` : "50%",
+    left: "50%",
+    width: `${mix(viewportWidth.value, targetWidth, progress)}px`,
+    height: `${mix(viewportHeight.value, targetHeight, progress)}px`,
+    borderRadius: `${mix(0, 28, progress)}px`,
+    opacity: "1",
+    transform: "translate(-50%, -50%)",
+  };
+});
 
 const nextLatestUpdate = () => {
   activeUpdateIndex.value = (activeUpdateIndex.value + 1) % latestUpdates.length;
@@ -111,6 +136,18 @@ const showRailCursor = (event, index) => {
 
 const hideRailCursor = () => {
   railCursorVisible.value = false;
+};
+
+const openResourceMenu = () => {
+  window.clearTimeout(resourceCloseTimeoutId);
+  resourceMenuOpen.value = true;
+};
+
+const closeResourceMenuLater = () => {
+  window.clearTimeout(resourceCloseTimeoutId);
+  resourceCloseTimeoutId = window.setTimeout(() => {
+    resourceMenuOpen.value = false;
+  }, 60);
 };
 
 const releaseWheelSnap = () => {
@@ -156,6 +193,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.clearInterval(latestIntervalId);
+  window.clearTimeout(resourceCloseTimeoutId);
   window.clearTimeout(wheelSnapTimeoutId);
   window.removeEventListener("scroll", updateViewport);
   window.removeEventListener("wheel", snapToWelcomeOnWheel);
@@ -165,6 +203,10 @@ onUnmounted(() => {
 
 <template>
   <div class="app-shell" :class="{ 'is-scrolled': scrollProgress > 0.55 }">
+    <video class="hero-video" autoplay muted loop playsinline :style="heroVideoStyle">
+      <source src="/hero-video.mp4" type="video/mp4" />
+    </video>
+
     <div class="hero-shade" :style="shadeStyle"></div>
 
     <section class="hero">
@@ -203,7 +245,12 @@ onUnmounted(() => {
           v-for="link in navLinks"
           :key="link"
           class="nav-item"
-          :class="{ 'nav-item--resources': link === 'Resources' }"
+          :class="{
+            'nav-item--resources': link === 'Resources',
+            'is-resource-open': link === 'Resources' && resourceMenuOpen,
+          }"
+          @pointerenter="link === 'Resources' && openResourceMenu()"
+          @pointerleave="link === 'Resources' && closeResourceMenuLater()"
         >
           <a
             :href="link === 'Resources' ? '#resources-menu' : `#${link.toLowerCase()}`"
@@ -218,7 +265,10 @@ onUnmounted(() => {
           <div
             v-if="link === 'Resources'"
             class="resource-popover"
+            :class="{ 'resource-popover--open': resourceMenuOpen }"
             aria-label="Resources preview"
+            @pointerenter="openResourceMenu"
+            @pointerleave="closeResourceMenuLater"
           >
             <div class="resource-list">
               <a
@@ -351,6 +401,6 @@ onUnmounted(() => {
       </span>
     </div>
 
-    <span class="media-credit">Background video: pending</span>
+    <span class="media-credit">Background video: local footage</span>
   </div>
 </template>
