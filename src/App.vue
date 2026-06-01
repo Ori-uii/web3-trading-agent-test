@@ -49,6 +49,8 @@ const railCursorY = ref(0);
 const railCursorDirection = ref("right");
 
 let latestIntervalId;
+let wheelSnapTimeoutId;
+let isWheelSnapping = false;
 
 const updateViewport = () => {
   scrollY.value = window.scrollY;
@@ -100,16 +102,52 @@ const hideRailCursor = () => {
   railCursorVisible.value = false;
 };
 
+const releaseWheelSnap = () => {
+  window.clearTimeout(wheelSnapTimeoutId);
+  wheelSnapTimeoutId = window.setTimeout(() => {
+    isWheelSnapping = false;
+  }, 720);
+};
+
+const snapToWelcomeOnWheel = (event) => {
+  if (event.deltaY <= 0 || isWheelSnapping) {
+    return;
+  }
+
+  const welcomeSection = document.getElementById("learn");
+
+  if (!welcomeSection) {
+    return;
+  }
+
+  const welcomeTop = welcomeSection.offsetTop;
+
+  if (window.scrollY >= welcomeTop - 2) {
+    return;
+  }
+
+  event.preventDefault();
+  isWheelSnapping = true;
+  window.scrollTo({
+    top: welcomeTop,
+    behavior: "smooth",
+  });
+  releaseWheelSnap();
+};
+
 onMounted(() => {
   updateViewport();
   startLatestCarousel();
   window.addEventListener("scroll", updateViewport, { passive: true });
+  window.addEventListener("wheel", snapToWelcomeOnWheel, { passive: false });
   window.addEventListener("resize", updateViewport);
 });
 
 onUnmounted(() => {
   window.clearInterval(latestIntervalId);
+  window.clearTimeout(wheelSnapTimeoutId);
   window.removeEventListener("scroll", updateViewport);
+  window.removeEventListener("wheel", snapToWelcomeOnWheel);
   window.removeEventListener("resize", updateViewport);
 });
 </script>
