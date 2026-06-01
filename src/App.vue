@@ -164,9 +164,9 @@ onUnmounted(() => {
 
     <section class="welcome-section" id="learn">
       <div class="welcome-layout">
-        <h2>Welcome to the</h2>
+        <h2>欢迎来到</h2>
         <div class="video-frame-shadow" aria-hidden="true"></div>
-        <h2>Open Economy</h2>
+        <h2>Web3 世界</h2>
       </div>
 
       <p>
