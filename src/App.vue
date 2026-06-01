@@ -4,6 +4,17 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 // 这些数组是页面数据。以后接真实接口时，可以先从这里替换成接口返回的数据。
 const navLinks = ["Products", "Resources", "Ecosystem", "About"];
 
+const resourcePreviewItems = [
+  {
+    title: "Insights",
+    description: "Market research and key learnings.",
+  },
+  {
+    title: "Blog",
+    description: "Product updates and highlights.",
+  },
+];
+
 const partners = ["YouTube", "bilibili", "Douyin", "Zhihu", "Xiaohongshu"];
 
 const latestUpdates = [
@@ -188,13 +199,58 @@ onUnmounted(() => {
       </a>
 
       <nav class="nav-links" aria-label="Main menu">
-        <a
+        <div
           v-for="link in navLinks"
           :key="link"
-          :href="`#${link.toLowerCase()}`"
+          class="nav-item"
+          :class="{ 'nav-item--resources': link === 'Resources' }"
         >
-          {{ link }}
-        </a>
+          <a
+            :href="link === 'Resources' ? '#resources-menu' : `#${link.toLowerCase()}`"
+            @click="
+              link === 'Resources' &&
+                ($event.preventDefault(), $event.currentTarget.blur())
+            "
+          >
+            {{ link }}
+          </a>
+
+          <div
+            v-if="link === 'Resources'"
+            class="resource-popover"
+            aria-label="Resources preview"
+          >
+            <div class="resource-list">
+              <a
+                v-for="item in resourcePreviewItems"
+                :key="item.title"
+                class="resource-option"
+                href="#resources-menu"
+                @click.prevent
+              >
+                <span class="resource-icon" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </span>
+
+                <span class="resource-text">
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ item.description }}</span>
+                </span>
+              </a>
+            </div>
+
+            <div class="resource-preview" aria-hidden="true">
+              <div class="resource-preview-stack">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </nav>
 
       <a class="launch-button" href="#launch">Launch App</a>
