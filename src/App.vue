@@ -8,30 +8,30 @@ const partners = ["YouTube", "bilibili", "Douyin", "Zhihu", "Xiaohongshu"];
 
 const latestUpdates = [
   {
-    category: "Product Update",
-    date: "Jun 01, 2026",
-    title: "NeuroTrade Adds AI-Native Market Execution",
+    category: "产品更新",
+    date: "2026 年 6 月 1 日",
+    title: "NeuroTrade 加入 AI 原生市场执行能力",
     description:
-      "The homepage now highlights an agent workflow for building, monitoring, and automating Web3 financial trading decisions.",
-    cta: "Read More",
+      "新的交易 Agent 工作流可以帮助用户构建、监控并自动化 Web3 金融交易策略，让市场观察、风险提示和执行动作形成更清晰的闭环。",
+    cta: "查看详情",
     visual: "agent",
   },
   {
-    category: "Design System",
-    date: "May 31, 2026",
-    title: "Dark Tech Landing Page Refined for Scroll Stories",
+    category: "界面升级",
+    date: "2026 年 5 月 31 日",
+    title: "深色科技主页完成滚动叙事升级",
     description:
-      "Navigation, hero messaging, partner marquee, and the second-page open economy section now work together as a polished Web3 homepage.",
-    cta: "View Update",
+      "首页导航、大标题、合作伙伴滚动栏和开放经济介绍区已经重新整理，整体视觉更接近现代 Web3 金融基础设施项目主页。",
+    cta: "查看更新",
     visual: "design",
   },
   {
-    category: "Infrastructure",
-    date: "May 31, 2026",
-    title: "Vue 3 and Vite Foundation Ready for Future Trading Tools",
+    category: "工程进展",
+    date: "2026 年 5 月 31 日",
+    title: "Vue 3 与 Vite 基础架构已准备就绪",
     description:
-      "The project has been rebuilt as a Vue 3 application with reusable data-driven sections, ready for videos, APIs, and new dashboard modules.",
-    cta: "Explore",
+      "项目已经重构为 Vue 3 + Vite 应用，后续可以继续接入本地视频、实时行情接口、策略面板和交易仪表盘模块。",
+    cta: "了解更多",
     visual: "infra",
   },
 ];
@@ -71,22 +71,6 @@ const heroContentStyle = computed(() => ({
   transform: `translateY(${-48 * scrollProgress.value}px)`,
 }));
 
-// 第三页始终按「上一条、当前条、下一条」排列，所以收起的卡片会出现在大卡片两侧。
-const orderedLatestUpdates = computed(() =>
-  [-1, 0, 1].map((offset) => {
-    const index =
-      (activeUpdateIndex.value + offset + latestUpdates.length) %
-      latestUpdates.length;
-
-    return {
-      ...latestUpdates[index],
-      index,
-      position: offset,
-      isActive: index === activeUpdateIndex.value,
-    };
-  }),
-);
-
 const nextLatestUpdate = () => {
   activeUpdateIndex.value = (activeUpdateIndex.value + 1) % latestUpdates.length;
 };
@@ -106,9 +90,9 @@ const moveRailCursor = (event) => {
   railCursorY.value = event.clientY;
 };
 
-const showRailCursor = (event, position) => {
+const showRailCursor = (event, index) => {
   moveRailCursor(event);
-  railCursorDirection.value = position < 0 ? "left" : "right";
+  railCursorDirection.value = index < activeUpdateIndex.value ? "left" : "right";
   railCursorVisible.value = true;
 };
 
@@ -196,32 +180,28 @@ onUnmounted(() => {
 
       <div class="latest-carousel" aria-label="最近更新轮播">
         <article
-          v-for="update in orderedLatestUpdates"
+          v-for="(update, index) in latestUpdates"
           :key="update.title"
           class="latest-card"
-          :class="{ 'latest-card--active': update.isActive }"
-          :role="update.isActive ? undefined : 'button'"
-          :tabindex="update.isActive ? undefined : 0"
+          :class="{ 'latest-card--active': index === activeUpdateIndex }"
+          :role="index === activeUpdateIndex ? undefined : 'button'"
+          :tabindex="index === activeUpdateIndex ? undefined : 0"
           :aria-label="
-            update.isActive ? update.title : `展开更新：${update.title}`
+            index === activeUpdateIndex ? update.title : `展开更新：${update.title}`
           "
-          @click="!update.isActive && showLatestUpdate(update.index)"
+          @click="index !== activeUpdateIndex && showLatestUpdate(index)"
           @keydown.enter.prevent="
-            !update.isActive && showLatestUpdate(update.index)
+            index !== activeUpdateIndex && showLatestUpdate(index)
           "
           @keydown.space.prevent="
-            !update.isActive && showLatestUpdate(update.index)
+            index !== activeUpdateIndex && showLatestUpdate(index)
           "
           @pointerenter="
-            !update.isActive && showRailCursor($event, update.position)
+            index !== activeUpdateIndex && showRailCursor($event, index)
           "
-          @pointermove="!update.isActive && moveRailCursor($event)"
+          @pointermove="index !== activeUpdateIndex && moveRailCursor($event)"
           @pointerleave="hideRailCursor"
         >
-          <div class="latest-rail-label">
-            <span>{{ update.category }}</span>
-          </div>
-
           <div class="latest-card-content">
             <div class="latest-visual" :class="`latest-visual--${update.visual}`">
             <div class="visual-grid" aria-hidden="true">
@@ -253,7 +233,7 @@ onUnmounted(() => {
           </div>
 
           <div
-            v-if="update.isActive"
+            v-if="index === activeUpdateIndex"
             :key="activeUpdateIndex"
             class="latest-timer"
             aria-label="5 秒自动切换计时"
