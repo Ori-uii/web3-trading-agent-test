@@ -15,6 +15,66 @@ const resourcePreviewItems = [
   },
 ];
 
+const productSections = [
+  {
+    title: "Assets",
+    items: [
+      {
+        name: "USDY",
+        tag: "Not Available in US",
+        description: "Freely transferable yieldcoin designed for DeFi.",
+        icon: "yield",
+      },
+      {
+        name: "OUSG",
+        tag: "For Institutions & HNWIs",
+        description: "Short-Term US Treasuries & Agency Bonds.",
+        icon: "treasury",
+      },
+    ],
+  },
+  {
+    title: "Platforms & Protocols",
+    items: [
+      {
+        name: "Ondo Global Markets",
+        tag: "Not Available in US",
+        description: "Access tokenized stocks and ETFs.",
+        icon: "market",
+      },
+      {
+        name: "Flux",
+        description: "Borrow and lend with tokenized assets.",
+        icon: "flux",
+      },
+      {
+        name: "Nexus",
+        tag: "For Asset Issuers",
+        description: "Offer instant 24/7 liquidity to your investors.",
+        icon: "nexus",
+      },
+    ],
+  },
+];
+
+const infrastructureProducts = [
+  {
+    name: "Neuro Chain",
+    description: "The L1 blockchain built for institutional-grade RWAs.",
+    icon: "chain",
+  },
+  {
+    name: "Bridge",
+    description: "Transfer Web3 financial assets across supported chains.",
+    icon: "bridge",
+  },
+  {
+    name: "Converter",
+    description: "Convert between accumulating and rebasing tokens.",
+    icon: "converter",
+  },
+];
+
 const partners = ["YouTube", "bilibili", "Douyin", "Zhihu", "Xiaohongshu"];
 
 const latestUpdates = [
@@ -54,6 +114,8 @@ const scrollY = ref(0);
 const viewportWidth = ref(window.innerWidth);
 const viewportHeight = ref(window.innerHeight);
 const activeUpdateIndex = ref(0);
+const activeProductKey = ref("USDY");
+const productMenuOpen = ref(false);
 const resourceMenuOpen = ref(false);
 const railCursorVisible = ref(false);
 const railCursorX = ref(0);
@@ -61,6 +123,7 @@ const railCursorY = ref(0);
 const railCursorDirection = ref("right");
 
 let latestIntervalId;
+let productCloseTimeoutId;
 let resourceCloseTimeoutId;
 let wheelSnapTimeoutId;
 let isWheelSnapping = false;
@@ -138,8 +201,28 @@ const hideRailCursor = () => {
   railCursorVisible.value = false;
 };
 
-const openResourceMenu = () => {
+const setActiveProduct = (name) => {
+  activeProductKey.value = name;
+};
+
+const openProductMenu = () => {
+  window.clearTimeout(productCloseTimeoutId);
   window.clearTimeout(resourceCloseTimeoutId);
+  resourceMenuOpen.value = false;
+  productMenuOpen.value = true;
+};
+
+const closeProductMenuLater = () => {
+  window.clearTimeout(productCloseTimeoutId);
+  productCloseTimeoutId = window.setTimeout(() => {
+    productMenuOpen.value = false;
+  }, 60);
+};
+
+const openResourceMenu = () => {
+  window.clearTimeout(productCloseTimeoutId);
+  window.clearTimeout(resourceCloseTimeoutId);
+  productMenuOpen.value = false;
   resourceMenuOpen.value = true;
 };
 
@@ -148,6 +231,26 @@ const closeResourceMenuLater = () => {
   resourceCloseTimeoutId = window.setTimeout(() => {
     resourceMenuOpen.value = false;
   }, 60);
+};
+
+const handleNavEnter = (link) => {
+  if (link === "Products") {
+    openProductMenu();
+  }
+
+  if (link === "Resources") {
+    openResourceMenu();
+  }
+};
+
+const handleNavLeave = (link) => {
+  if (link === "Products") {
+    closeProductMenuLater();
+  }
+
+  if (link === "Resources") {
+    closeResourceMenuLater();
+  }
 };
 
 const releaseWheelSnap = () => {
@@ -193,6 +296,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.clearInterval(latestIntervalId);
+  window.clearTimeout(productCloseTimeoutId);
   window.clearTimeout(resourceCloseTimeoutId);
   window.clearTimeout(wheelSnapTimeoutId);
   window.removeEventListener("scroll", updateViewport);
@@ -246,21 +350,107 @@ onUnmounted(() => {
           :key="link"
           class="nav-item"
           :class="{
+            'nav-item--products': link === 'Products',
+            'is-product-open': link === 'Products' && productMenuOpen,
             'nav-item--resources': link === 'Resources',
             'is-resource-open': link === 'Resources' && resourceMenuOpen,
           }"
-          @pointerenter="link === 'Resources' && openResourceMenu()"
-          @pointerleave="link === 'Resources' && closeResourceMenuLater()"
+          @pointerenter="handleNavEnter(link)"
+          @pointerleave="handleNavLeave(link)"
         >
           <a
-            :href="link === 'Resources' ? '#resources-menu' : `#${link.toLowerCase()}`"
+            :href="
+              link === 'Products'
+                ? '#products-menu'
+                : link === 'Resources'
+                  ? '#resources-menu'
+                  : `#${link.toLowerCase()}`
+            "
             @click="
-              link === 'Resources' &&
+              (link === 'Products' || link === 'Resources') &&
                 ($event.preventDefault(), $event.currentTarget.blur())
             "
           >
             {{ link }}
           </a>
+
+          <div
+            v-if="link === 'Products'"
+            class="product-popover"
+            :class="{ 'product-popover--open': productMenuOpen }"
+            aria-label="Products preview"
+            @pointerenter="openProductMenu"
+            @pointerleave="closeProductMenuLater"
+          >
+            <div class="product-columns">
+              <div class="product-left">
+                <section
+                  v-for="section in productSections"
+                  :key="section.title"
+                  class="product-section"
+                >
+                  <h3>{{ section.title }}</h3>
+
+                  <a
+                    v-for="item in section.items"
+                    :key="item.name"
+                    class="product-option"
+                    :class="{ 'product-option--active': item.name === activeProductKey }"
+                    href="#products-menu"
+                    @pointerenter="setActiveProduct(item.name)"
+                    @click.prevent
+                  >
+                    <span
+                      class="product-icon"
+                      :class="`product-icon--${item.icon}`"
+                      aria-hidden="true"
+                    ></span>
+
+                    <span class="product-copy">
+                      <strong>
+                        {{ item.name }}
+                        <span v-if="item.tag">{{ item.tag }}</span>
+                      </strong>
+                      <span>{{ item.description }}</span>
+                    </span>
+                  </a>
+                </section>
+              </div>
+
+              <div class="product-right">
+                <div class="product-hero-visual" aria-hidden="true">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+                <section class="product-section product-section--infrastructure">
+                  <h3>Infrastructure</h3>
+
+                  <a
+                    v-for="item in infrastructureProducts"
+                    :key="item.name"
+                    class="product-option"
+                    :class="{ 'product-option--active': item.name === activeProductKey }"
+                    href="#products-menu"
+                    @pointerenter="setActiveProduct(item.name)"
+                    @click.prevent
+                  >
+                    <span
+                      class="product-icon"
+                      :class="`product-icon--${item.icon}`"
+                      aria-hidden="true"
+                    ></span>
+
+                    <span class="product-copy">
+                      <strong>{{ item.name }}</strong>
+                      <span>{{ item.description }}</span>
+                    </span>
+                  </a>
+                </section>
+              </div>
+            </div>
+          </div>
 
           <div
             v-if="link === 'Resources'"

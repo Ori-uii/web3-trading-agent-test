@@ -4,6 +4,9 @@ node_modules/
 # Vite build output
 dist/
 
+# Local automation/test artifacts
+output/
+
 # Local environment files
 .env
 .env.*
